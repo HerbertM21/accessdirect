@@ -28,8 +28,10 @@ impl TablaHash {
         }
 
         let mut indice = self.calcular_indice(&email);
+        let mut i = 1;
         while self.tabla[indice].is_some() {
-            indice = (indice + 1) % self.capacidad;
+            indice = (indice + i * i) % self.capacidad;
+            i += 1;
         }
         self.tabla[indice] = Some((email, posicion));
         self.num_elementos += 1;
@@ -37,18 +39,20 @@ impl TablaHash {
 
     pub fn obtener(&self, email: &str) -> Option<u64> {
         let mut indice = self.calcular_indice(email);
+        let mut i = 1;
         while let Some((e, pos)) = &self.tabla[indice] {
             if e == email {
                 return Some(*pos);
             }
-            indice = (indice + 1) % self.capacidad;
+            indice = (indice + i * i) % self.capacidad;
+            i += 1;
         }
         None
     }
 
     fn redimensionar(&mut self) {
         let nueva_capacidad = self.capacidad * 2;
-        let mut nueva_tabla = vec![None; nueva_capacidad];
+        let mut nueva_tabla: Vec<Option<(String, u64)>> = vec![None; nueva_capacidad];
         
         for entrada in self.tabla.iter().filter_map(|entry| entry.as_ref()) {
             let (email, posicion) = entrada;
@@ -58,8 +62,10 @@ impl TablaHash {
                 (hasher.finish() % nueva_capacidad as u64) as usize
             };
             
+            let mut i = 1;
             while nueva_tabla[indice].is_some() {
-                indice = (indice + 1) % nueva_capacidad;
+                indice = (indice + i * i) % nueva_capacidad;
+                i += 1;
             }
             nueva_tabla[indice] = Some((email.clone(), *posicion));
         }
