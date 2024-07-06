@@ -4,39 +4,37 @@ use std::hash::{Hash, Hasher};
 pub struct TablaHash {
     tabla: Vec<Option<(String, u64)>>,
     capacidad: usize,
+    num_elementos: usize,
 }
 
-// Se implementa la estructura TablaHash
 impl TablaHash {
-    // Se implementa el constructor, especificando la capacidad de la tabla
     pub fn new(capacidad: usize) -> Self {
         TablaHash {
             tabla: vec![None; capacidad],
             capacidad,
+            num_elementos: 0,
         }
     }
 
-    // Metodo que calcula el índice en la tabla a partir del email
     fn calcular_indice(&self, email: &str) -> usize {
-        // Se crea un hash a partir del email
         let mut hasher = DefaultHasher::new();
         email.hash(&mut hasher);
-        // Se asegura de que el índice esté dentro de los límites de la tabla
         (hasher.finish() % self.capacidad as u64) as usize
     }
 
-    // Metodo que inserta un email y su posición en la tabla hash
     pub fn insertar(&mut self, email: String, posicion: u64) {
+        if self.num_elementos >= self.capacidad / 2 {
+            self.redimensionar();
+        }
+
         let mut indice = self.calcular_indice(&email);
-        // Mientras que la posición en la tabla no esté vacía, se busca la siguiente posición
         while self.tabla[indice].is_some() {
             indice = (indice + 1) % self.capacidad;
         }
-        // Se inserta el email y la posición en la tabla
         self.tabla[indice] = Some((email, posicion));
+        self.num_elementos += 1;
     }
 
-    // Metodo que obtiene la posición de un email en la tabla hash
     pub fn obtener(&self, email: &str) -> Option<u64> {
         let mut indice = self.calcular_indice(email);
         while let Some((e, pos)) = &self.tabla[indice] {
@@ -46,5 +44,27 @@ impl TablaHash {
             indice = (indice + 1) % self.capacidad;
         }
         None
+    }
+
+    fn redimensionar(&mut self) {
+        let nueva_capacidad = self.capacidad * 2;
+        let mut nueva_tabla = vec![None; nueva_capacidad];
+        
+        for entrada in self.tabla.iter().filter_map(|entry| entry.as_ref()) {
+            let (email, posicion) = entrada;
+            let mut indice = {
+                let mut hasher = DefaultHasher::new();
+                email.hash(&mut hasher);
+                (hasher.finish() % nueva_capacidad as u64) as usize
+            };
+            
+            while nueva_tabla[indice].is_some() {
+                indice = (indice + 1) % nueva_capacidad;
+            }
+            nueva_tabla[indice] = Some((email.clone(), *posicion));
+        }
+        
+        self.tabla = nueva_tabla;
+        self.capacidad = nueva_capacidad;
     }
 }
