@@ -18,7 +18,6 @@ impl GestorPersonas {
             .create(true)
             .open(nombre_archivo)?;
         
-        let capacidad_hash = capacidad_hash.min(1_000_000); // Limitar a un valor razonable
         let mut gestor = GestorPersonas {
             archivo,
             tabla_hash: TablaHash::new(capacidad_hash),
@@ -27,7 +26,7 @@ impl GestorPersonas {
         Ok(gestor)
     }
 
-    pub fn ingresar_registro(&mut self, persona: Persona) -> Result<(), GestorError> {
+    pub fn ingreso(&mut self, persona: Persona) -> Result<(), GestorError> {
         self.archivo.seek(SeekFrom::End(0))?; // seek al final del archivo
         // stream_position() devuelve la posición actual del cursor en el archivo
         let posicion: u64 = self.archivo.stream_position()?;
@@ -37,7 +36,7 @@ impl GestorPersonas {
         Ok(())
     }
 
-    pub fn buscar_registro(&mut self, email: &str) -> Result<Option<Persona>, GestorError> {
+    pub fn busqueda(&mut self, email: &str) -> Result<Option<Persona>, GestorError> {
         if let Some(posicion) = self.tabla_hash.obtener(email) {
             self.archivo.seek(SeekFrom::Start(posicion))?;
             let mut buffer: Vec<u8> = Vec::new();
@@ -49,7 +48,7 @@ impl GestorPersonas {
         }
     }
 
-    pub fn modificar_registro(&mut self, email: &str, nueva_persona: Persona) -> Result<bool, GestorError> {
+    pub fn modificacion(&mut self, email: &str, nueva_persona: Persona) -> Result<bool, GestorError> {
         if let Some(posicion) = self.tabla_hash.obtener(email) {
             self.archivo.seek(SeekFrom::Start(posicion))?;
             let bytes: Vec<u8> = serialize(&nueva_persona)?;
@@ -67,9 +66,6 @@ impl GestorPersonas {
         self.archivo.seek(SeekFrom::Start(0))?;
         let mut posicion = 0;
         loop {
-            // deserialize_from() lee una estructura de datos de un archivo binario
-            // Sus argumentos <_, Persona> indican que el tipo de dato a leer es Persona
-            // y el _ es un placeholder para el tipo de dato del archivo, que se infiere automáticamente
             match bincode::deserialize_from::<_, Persona>(&mut self.archivo) {
                 // Ok(persona) indica que se pudo leer una Persona del archivo
                 Ok(persona) => {

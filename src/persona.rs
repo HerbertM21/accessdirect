@@ -1,11 +1,11 @@
 use serde::{Serialize, Deserialize};
 
 // Se usa la macro derive para implementar automáticamente los traits Serialize y Deserialize
-// Serializar y deserializar una estructura de datos es convertirla a un formato que se pueda
-// almacenar en un archivo o transmitir por la red, y viceversa.
-// La serialización convierte la estructura de datos en una secuencia de bytes, y la deserialización
-// convierte esa secuencia de bytes de vuelta a la estructura de datos original.
+// Archivo especializado para obtener la estructura Persona 
+// con las funcionalidades de serialización y deserialización.
 #[derive(Debug, Serialize, Deserialize)]
+
+// Se define la estructura Persona con los datos requeridos
 pub struct Persona {
     pub nombres: String,
     pub apellidos: String,
@@ -19,5 +19,3 @@ pub struct Persona {
     pub email: String,
 }
 
-// Para que serializamos la estructura Persona?
-// Porque queremos almacenarla en un archivo binario, y para eso necesitamos convertirla a bytes.

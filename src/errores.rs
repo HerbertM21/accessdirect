@@ -12,7 +12,7 @@ pub enum GestorError {
 impl fmt::Display for GestorError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            GestorError::Io(err) => write!(f, "Error de I/O: {}", err),
+            GestorError::Io(err) => write!(f, "Error de E/S: {}", err),
             GestorError::Bincode(err) => write!(f, "Error de serialización: {}", err),
         }
     }

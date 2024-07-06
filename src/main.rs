@@ -11,7 +11,7 @@ use gestor_personas::GestorPersonas;
 fn main() -> Result<(), GestorError> {
     let mut gestor = GestorPersonas::new("personas.bin", 50)?;
     menu_principal(&mut gestor)
-}
+}   
 
 fn menu_principal(gestor: &mut GestorPersonas) -> Result<(), GestorError> {
     loop {
@@ -27,7 +27,7 @@ fn menu_principal(gestor: &mut GestorPersonas) -> Result<(), GestorError> {
         io::stdin().read_line(&mut opcion)?; 
 
         match opcion.trim() {
-            "1" => ingresar_nuevo_registro(gestor)?,
+            "1" => ingresar_registro(gestor)?,
             "2" => buscar_registro(gestor)?,
             "3" => modificar_registro(gestor)?,
             "4" => {
@@ -37,17 +37,19 @@ fn menu_principal(gestor: &mut GestorPersonas) -> Result<(), GestorError> {
             _ => println!("Opción no válida. Por favor, intente de nuevo."),
         }
     }
-    Ok(())
+    Ok(()) // Ok(()) es una forma de devolver un Result vacio
 }
 
-fn ingresar_nuevo_registro(gestor: &mut GestorPersonas) -> Result<(), GestorError> {
+// Función que permite ingresar un nuevo registro
+fn ingresar_registro(gestor: &mut GestorPersonas) -> Result<(), GestorError> {
     println!("\n--- Ingresar Nuevo Registro ---");
     let persona = leer_datos_persona()?;
-    gestor.ingresar_registro(persona)?;
+    gestor.ingreso(persona)?;
     println!("Registro ingresado exitosamente.");
     Ok(()) // Ok(()) es una forma de devolver un Result vacio
 }
 
+// Función que permite buscar un registro por email
 fn buscar_registro(gestor: &mut GestorPersonas) -> Result<(), GestorError> {
     println!("\n--- Buscar Registro por Email ---");
     print!("Ingrese el email a buscar: ");
@@ -56,13 +58,14 @@ fn buscar_registro(gestor: &mut GestorPersonas) -> Result<(), GestorError> {
     io::stdin().read_line(&mut email)?;
     let email = email.trim();
 
-    match gestor.buscar_registro(email)? {
+    match gestor.busqueda(email)? {
         Some(persona) => println!("Registro encontrado: {:?}", persona),
         None => println!("No se encontró ningún registro con ese email."),
     }
-    Ok(())
+    Ok(()) // Ok(()) es una forma de devolver un Result vacio
 }
 
+// Función que permite modificar un registro existente
 fn modificar_registro(gestor: &mut GestorPersonas) -> Result<(), GestorError> {
     println!("\n--- Modificar Registro Existente ---");
     print!("Ingrese el email del registro a modificar: ");
@@ -72,10 +75,10 @@ fn modificar_registro(gestor: &mut GestorPersonas) -> Result<(), GestorError> {
     let email = email.trim();
 
     // si gestor.buscar_registro(email) es "algo", entonces...
-    if gestor.buscar_registro(email)?.is_some() {
+    if gestor.busqueda(email)?.is_some() {
         println!("Ingrese los nuevos datos:");
         let nueva_persona = leer_datos_persona()?;
-        if gestor.modificar_registro(email, nueva_persona)? {
+        if gestor.modificacion(email, nueva_persona)? {
             println!("Registro modificado exitosamente.");
         } else {
             println!("Error al modificar el registro.");
@@ -86,6 +89,7 @@ fn modificar_registro(gestor: &mut GestorPersonas) -> Result<(), GestorError> {
     Ok(())
 }
 
+// Función que permite leer los datos de una persona desde el stdin
 fn leer_datos_persona() -> Result<Persona, GestorError> {
     let mut persona = Persona {
         nombres: String::new(),

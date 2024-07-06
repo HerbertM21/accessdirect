@@ -7,10 +7,9 @@ pub struct TablaHash {
 }
 
 // Se implementa la estructura TablaHash
-// Se simula la programación OOP con el constructor new y los siguientes metodos:
 impl TablaHash {
+    // Se implementa el constructor, especificando la capacidad de la tabla
     pub fn new(capacidad: usize) -> Self {
-        let capacidad = capacidad.min(1_000_000);
         TablaHash {
             tabla: vec![None; capacidad],
             capacidad,
@@ -29,9 +28,11 @@ impl TablaHash {
     // Metodo que inserta un email y su posición en la tabla hash
     pub fn insertar(&mut self, email: String, posicion: u64) {
         let mut indice = self.calcular_indice(&email);
+        // Mientras que la posición en la tabla no esté vacía, se busca la siguiente posición
         while self.tabla[indice].is_some() {
             indice = (indice + 1) % self.capacidad;
         }
+        // Se inserta el email y la posición en la tabla
         self.tabla[indice] = Some((email, posicion));
     }
 
