@@ -96,6 +96,7 @@ impl GestorPersonas {
     fn reconstruir_tabla_hash(&mut self) -> Result<(), GestorError> {
         self.archivo.seek(SeekFrom::Start(0))?;
         let mut posicion = 0;
+        // Se crea un bucle para recorrer todas las estructuras del archivo binario
         loop {
             let posicion_inicial = posicion;
             // Se deserializa la estructura Persona del archivo
