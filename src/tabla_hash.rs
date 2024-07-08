@@ -3,7 +3,7 @@ use std::hash::{Hash, Hasher};
 
 // Se define la estructura TablaHash con un vector de tuplas (email, posición)
 pub struct TablaHash {
-    tabla: Vec<Option<(String, u64)>>,
+    tabla: Vec<Option<(String, u64, u64)>>,
     capacidad: usize,
     num_elementos: usize,
 }
@@ -27,7 +27,7 @@ impl TablaHash {
     }
 
     // Se encarga de insertar la tupla (email, posición) en la tabla Hash
-    pub fn insertar(&mut self, email: String, posicion: u64) {
+    pub fn insertar(&mut self, email: String, posicion: u64, posicion_final: u64) {
         if self.num_elementos >= self.capacidad / 2 {
             // Se redimensiona la tabla al doble de su tamaño si se llena a más del 50%
             self.redimensionar();
@@ -42,17 +42,17 @@ impl TablaHash {
             indice = (indice + i * i) % self.capacidad;
             i += 1;
         }
-        self.tabla[indice] = Some((email, posicion));
+        self.tabla[indice] = Some((email, posicion, posicion_final));
         self.num_elementos += 1;
     }
 
     // Se encarga de obtener la posición de la estructura en el archivo.bin a partir de su email
-    pub fn obtener(&self, email: &str) -> Option<u64> {
+    pub fn obtener(&self, email: &str) -> Option<(u64, u64)> {
         let mut indice = self.calcular_indice(email);
         let mut i = 1;
-        while let Some((e, pos)) = &self.tabla[indice] {
+        while let Some((e, pos_inicial, pos_final)) = &self.tabla[indice] {
             if e == email {
-                return Some(*pos);
+                return Some((*pos_inicial, *pos_final));
             }
             // Se implementa el sondeo cuadrático para evitar colisiones
             indice = (indice + i * i) % self.capacidad;
@@ -61,17 +61,32 @@ impl TablaHash {
         None
     }
 
+    // Se encarga de eliminar la tupla (email, posicion, posicion_final) de la tabla Hash
+    pub fn eliminar(&mut self, email: &str) {
+        let mut indice = self.calcular_indice(email);
+        let mut i = 1;
+        while let Some((e, _, _)) = &self.tabla[indice] {
+            if e == email {
+                self.tabla[indice] = None;
+                self.num_elementos -= 1;
+                return;
+            }
+            indice = (indice + i * i) % self.capacidad;
+            i += 1;
+        }
+    }
+
     // Se encarga de redimensionar la tabla al doble de su tamaño para evitar colisiones
     // y mantener la eficiencia en la tabla Hash
     fn redimensionar(&mut self) {
         let nueva_capacidad = self.capacidad * 2;
-        let mut nueva_tabla: Vec<Option<(String, u64)>> = vec![None; nueva_capacidad];
+        let mut nueva_tabla: Vec<Option<(String, u64, u64)>> = vec![None; nueva_capacidad];
         
         // Iteramos sobre la tabla actual y copiamos los elementos a la nueva tabla
         // No se modifica directamente la tabla original porque el lenguaje no permite modificar
         // si se está iterando sobre ella.
         for entrada in self.tabla.iter().filter_map(|entry| entry.as_ref()) {
-            let (email, posicion) = entrada; // `email` y `posicion` son referencias
+            let (email, posicion, posicion_final) = entrada; // `email` y `posicion` son referencias
             let mut indice = {
                 let mut hasher = DefaultHasher::new();
                 email.hash(&mut hasher);
@@ -84,7 +99,7 @@ impl TablaHash {
                 indice = (indice + i * i) % nueva_capacidad;
                 i += 1;
             }
-            nueva_tabla[indice] = Some((email.clone(), *posicion)); 
+            nueva_tabla[indice] = Some((email.clone(), *posicion, *posicion_final)); 
         }
         
         self.tabla = nueva_tabla;

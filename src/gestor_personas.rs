@@ -1,7 +1,7 @@
-use std::fs::{File, OpenOptions};
-use std::io::{Read, Seek, SeekFrom, Write};
-use bincode::{deserialize, serialize};
-use crate::errores::GestorError;
+use std::fs::{File, OpenOptions}; // Se importa el modulo para trabajar con archivos
+use std::io::{Read, Seek, SeekFrom, Write}; // Se importa el modulo para manejar las funciones de entrada/salida
+use bincode::{deserialize, serialize}; // Se importa la función serialize y deserialize de la biblioteca bincode
+use crate::errores::GestorError; 
 use crate::persona::Persona;
 use crate::tabla_hash::TablaHash;
 
@@ -37,16 +37,19 @@ impl GestorPersonas {
         let posicion: u64 = self.archivo.stream_position()?; // Retorna la posición actual del cursor
         let bytes: Vec<u8> = serialize(&persona)?;
         self.archivo.write_all(&bytes)?; 
-        self.tabla_hash.insertar(persona.email.clone(), posicion);
+        // Insertamos la ultima posicion de la estructura en el archivo
+        self.archivo.seek(SeekFrom::End(0))?;
+        let posicion_final: u64 = self.archivo.stream_position()?;
+        self.tabla_hash.insertar(persona.email.clone(), posicion, posicion_final);
         Ok(())
     }
 
     // Se encarga de buscar una persona en el archivo a partir de su email
     pub fn busqueda(&mut self, email: &str) -> Result<Option<Persona>, GestorError> {
-        if let Some(posicion) = self.tabla_hash.obtener(email) {
-            self.archivo.seek(SeekFrom::Start(posicion))?; 
-            let mut buffer: Vec<u8> = Vec::new();
-            self.archivo.read_to_end(&mut buffer)?;
+        if let Some((posicion_inicial, posicion_final)) = self.tabla_hash.obtener(email) {
+            self.archivo.seek(SeekFrom::Start(posicion_inicial))?; 
+            let mut buffer = vec![0; (posicion_final - posicion_inicial) as usize];
+            self.archivo.read_exact(&mut buffer)?;
             let persona: Persona = deserialize(&buffer)?;
             Ok(Some(persona))
         } else {
@@ -56,10 +59,33 @@ impl GestorPersonas {
 
     // Se encarga de modificar una persona en el archivo a partir de su email
     pub fn modificacion(&mut self, email: &str, nueva_persona: Persona) -> Result<bool, GestorError> {
-        if let Some(posicion) = self.tabla_hash.obtener(email) {
-            self.archivo.seek(SeekFrom::Start(posicion))?;
-            let bytes: Vec<u8> = serialize(&nueva_persona)?;
-            self.archivo.write_all(&bytes)?;
+        if let Some((posicion_inicial, posicion_final)) = self.tabla_hash.obtener(email) {
+            let nueva_bytes: Vec<u8> = serialize(&nueva_persona)?;
+            let longitud_original = posicion_final - posicion_inicial;
+            let longitud_nueva = nueva_bytes.len() as u64;
+    
+            self.archivo.seek(SeekFrom::Start(posicion_inicial))?;
+    
+            let longitud_escrita = if longitud_nueva <= longitud_original {
+                // Si la nueva estructura cabe en el espacio original, la escribimos en su lugar
+                self.archivo.write_all(&nueva_bytes)?;
+                
+                // Si sobra espacio, lo llenamos con bytes nulos
+                if longitud_nueva < longitud_original {
+                    let padding = vec![0; (longitud_original - longitud_nueva) as usize];
+                    self.archivo.write_all(&padding)?;
+                }
+                longitud_nueva
+            } else {
+                // Si la nueva estructura es más grande, evitamos escribir mas del espacio original
+                self.archivo.write_all(&nueva_bytes[..longitud_original as usize])?;
+                longitud_original
+            };
+    
+            // Actualizamos la tabla hash con el nuevo email
+            self.tabla_hash.eliminar(email);
+            self.tabla_hash.insertar(nueva_persona.email.clone(), posicion_inicial, posicion_inicial + longitud_escrita);
+    
             Ok(true)
         } else {
             Ok(false)
@@ -71,26 +97,27 @@ impl GestorPersonas {
         self.archivo.seek(SeekFrom::Start(0))?;
         let mut posicion = 0;
         loop {
-            // Se deserializa una Persona del archivo binario y se manejan sus resultados
+            let posicion_inicial = posicion;
+            // Se deserializa la estructura Persona del archivo
+            // Se manejan los resultados de exito y error
             match bincode::deserialize_from::<_, Persona>(&mut self.archivo) {
-                // Ok(persona) indica que se pudo leer una Persona del archivo
+                // Si se obtiene la estructura Persona, se inserta en la tabla hash
                 Ok(persona) => {
-                    self.tabla_hash.insertar(persona.email.clone(), posicion);
-                    posicion = self.archivo.stream_position()?;
+                    let posicion_final = self.archivo.stream_position()?;
+                    self.tabla_hash.insertar(persona.email.clone(), posicion_inicial, posicion_final);
+                    posicion = posicion_final;
                 },
-                // Err(e) indica que hubo un error al leer del archivo
+                // Si se produce un error, se verifica si es un error de fin de archivo
                 Err(e) => {
-                    // Verificar si el error es debido al final del archivo
                     if let bincode::ErrorKind::Io(ref io_error) = *e {
                         if io_error.kind() == std::io::ErrorKind::UnexpectedEof {
-                            break; // Llegamos al final del archivo, salimos del loop
+                            break;
                         }
                     }
-                    // Si no es un error de EOF, se imprime el error y se retorna
                     return Err(GestorError::Bincode(e));
                 },
             }
         }
         Ok(())
     }
-}  
+}

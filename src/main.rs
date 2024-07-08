@@ -113,6 +113,7 @@ fn leer_datos_persona() -> Result<Persona, GestorError> {
         email: String::new(),
     };
 
+    // Se solicitan los datos de la persona al usuario
     print!("Nombres: ");
     io::stdout().flush()?;
     io::stdin().read_line(&mut persona.nombres)?;
