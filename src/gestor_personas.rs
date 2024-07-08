@@ -5,19 +5,23 @@ use crate::errores::GestorError;
 use crate::persona::Persona;
 use crate::tabla_hash::TablaHash;
 
+// Se define la estructura GestorPersonas con un archivo binario y una tabla hash
 pub struct GestorPersonas {
     archivo: File,
     tabla_hash: TablaHash,
 }
 
+// Implementación de la estructura GestorPersonas
 impl GestorPersonas {
     pub fn new(nombre_archivo: &str, capacidad_hash: usize) -> Result<Self, GestorError> {
+        // Se abre el archivo binario en modo lectura y escritura
         let archivo = OpenOptions::new()
             .read(true)
             .write(true)
             .create(true)
             .open(nombre_archivo)?;
         
+        // Se crea una nueva instancia de GestorPersonas con el archivo y la tabla hash
         let mut gestor = GestorPersonas {
             archivo,
             tabla_hash: TablaHash::new(capacidad_hash),
@@ -30,8 +34,7 @@ impl GestorPersonas {
     pub fn ingreso(&mut self, persona: Persona) -> Result<(), GestorError> {
         // Se mueve el cursor al final del archivo
         self.archivo.seek(SeekFrom::End(0))?;
-        // stream_position() devuelve la posición actual del cursor en el archivo
-        let posicion: u64 = self.archivo.stream_position()?;
+        let posicion: u64 = self.archivo.stream_position()?; // Retorna la posición actual del cursor
         let bytes: Vec<u8> = serialize(&persona)?;
         self.archivo.write_all(&bytes)?; 
         self.tabla_hash.insertar(persona.email.clone(), posicion);
@@ -41,7 +44,7 @@ impl GestorPersonas {
     // Se encarga de buscar una persona en el archivo a partir de su email
     pub fn busqueda(&mut self, email: &str) -> Result<Option<Persona>, GestorError> {
         if let Some(posicion) = self.tabla_hash.obtener(email) {
-            self.archivo.seek(SeekFrom::Start(posicion))?;
+            self.archivo.seek(SeekFrom::Start(posicion))?; 
             let mut buffer: Vec<u8> = Vec::new();
             self.archivo.read_to_end(&mut buffer)?;
             let persona: Persona = deserialize(&buffer)?;
@@ -68,12 +71,14 @@ impl GestorPersonas {
         self.archivo.seek(SeekFrom::Start(0))?;
         let mut posicion = 0;
         loop {
+            // Se deserializa una Persona del archivo binario y se manejan sus resultados
             match bincode::deserialize_from::<_, Persona>(&mut self.archivo) {
                 // Ok(persona) indica que se pudo leer una Persona del archivo
                 Ok(persona) => {
                     self.tabla_hash.insertar(persona.email.clone(), posicion);
                     posicion = self.archivo.stream_position()?;
                 },
+                // Err(e) indica que hubo un error al leer del archivo
                 Err(e) => {
                     // Verificar si el error es debido al final del archivo
                     if let bincode::ErrorKind::Io(ref io_error) = *e {

@@ -1,15 +1,15 @@
-mod persona;
-mod tabla_hash;
-mod gestor_personas;
-mod errores;
+mod persona; // Importa la estructura Persona
+mod tabla_hash; // Importa la estructura TablaHash
+mod gestor_personas; // Importa la estructura GestorPersonas
+mod errores; // Importa la encapsulación de errores
 
-use errores::GestorError;
-use std::io::{self, Write};
-use persona::Persona;
-use gestor_personas::GestorPersonas;
+use errores::GestorError; // Importa la estructura GestorError
+use std::io::{self, Write}; // Importa el módulo io y el trait Write
+use persona::Persona; // Importa la estructura Persona
+use gestor_personas::GestorPersonas; // Importa la estructura GestorPersonas
 
 fn main() -> Result<(), GestorError> {
-    let mut gestor = GestorPersonas::new("personas.bin", 50)?;
+    let mut gestor = GestorPersonas::new("personas.bin", 500)?;
     menu_principal(&mut gestor)
 }   
 
@@ -61,8 +61,11 @@ fn buscar_registro(gestor: &mut GestorPersonas) -> Result<(), GestorError> {
     io::stdin().read_line(&mut email)?;
     let email = email.trim(); // Elimina los espacios en blanco al inicio y al final
 
+    // Si gestor.busqueda(email) retorna "algo", entonces...
     match gestor.busqueda(email)? {
-        Some(persona) => println!("Registro encontrado: {:?}", persona),
+        // Si se encuentra un registro, se imprime en pantalla
+        Some(persona) => println!("Registro encontrado: {:?}", persona), 
+        // Si no se encuentra ningún registro, se imprime un mensaje
         None => println!("No se encontró ningún registro con ese email."),
     }
 
@@ -87,7 +90,7 @@ fn modificar_registro(gestor: &mut GestorPersonas) -> Result<(), GestorError> {
         } else {
             println!("Error al modificar el registro.");
         }
-    // En caso de retornar None, entonces...
+    // En caso de retornar None, entonces..
     } else {
         println!("No se encontró ningún registro con ese email.");
     }
@@ -160,5 +163,5 @@ fn leer_datos_persona() -> Result<Persona, GestorError> {
     io::stdin().read_line(&mut persona.email)?;
     persona.email = persona.email.trim().to_string();
 
-    Ok(persona) // Devuelve la persona creada si no hubo errores
+    Ok(persona) // Retorna la persona creada si no hubo errores
 }
