@@ -1,3 +1,6 @@
+// Herbert Mayorga
+// Sistemas Operativos - UCM
+
 mod persona; // Importa la estructura Persona
 mod tabla_hash; // Importa la estructura TablaHash
 mod gestor_personas; // Importa la estructura GestorPersonas
