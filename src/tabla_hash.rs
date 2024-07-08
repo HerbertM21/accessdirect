@@ -1,13 +1,16 @@
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
+// Se define la estructura TablaHash con un vector de tuplas (email, posición)
 pub struct TablaHash {
     tabla: Vec<Option<(String, u64)>>,
     capacidad: usize,
     num_elementos: usize,
 }
 
+// Se implementa la estructura TablaHash
 impl TablaHash {
+    // Constructor de la estructura 
     pub fn new(capacidad: usize) -> Self {
         TablaHash {
             tabla: vec![None; capacidad],
