@@ -21,23 +21,19 @@ impl TablaHash {
 
     // Se encarga de calcular el índice de la tabla a partir del email con el algoritmo de hashing rust
     fn calcular_indice(&self, email: &str) -> usize {
-        let mut hasher = DefaultHasher::new();
-        email.hash(&mut hasher);
-        (hasher.finish() % self.capacidad as u64) as usize
+        let mut hasher = DefaultHasher::new(); // Algoritmo de hashing de Rust
+        email.hash(&mut hasher); // Se calcula el hash del email
+        (hasher.finish() % self.capacidad as u64) as usize // Se obtiene el índice de la tabla en un rango de 0 a capacidad
     }
 
-    // Le pasamos como argumento el email original, ya que solo queremos que se ingrese a la tabla
-    // No importa que después se elimine de la memoria, dado que, igualmente llamamos a esta función en
-    // gestor_personas.rs, con un clone del email original.
+    // Se encarga de insertar la tupla (email, posición) en la tabla Hash
     pub fn insertar(&mut self, email: String, posicion: u64) {
         if self.num_elementos >= self.capacidad / 2 {
             // Se redimensiona la tabla al doble de su tamaño si se llena a más del 50%
             self.redimensionar();
         }
 
-        // la funcion calcular_indice se implementa con valor referencia para más eficiencia, 
-        // porque así no tendriamos un valor más dentro de la memoria, y solo se usaría un valor 
-        // que luego se eliminará automaticamente de la función despues de terminar la función insertar.
+        // Se calcula el índice de la tabla a partir del email
         let mut indice: usize = self.calcular_indice(&email);
         let mut i: usize = 1;
 
@@ -95,8 +91,3 @@ impl TablaHash {
         self.capacidad = nueva_capacidad;
     }
 }
-
-// Por eso, se implementa la referenciacion a la tupla dentro de la función redimensionar
-// para que no se modifique la tabla original, y se pueda iterar sobre ella sin problemas.
-// Dado que se está haciendo un asignación de un valor de la tabla, eso le quita la propiedad a la tabla
-// original y se esta modificando dentro de la iteracion y el lenguaje no lo permite.

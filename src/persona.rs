@@ -1,8 +1,7 @@
 use serde::{Serialize, Deserialize};
 
 // Se usa la macro derive para implementar automáticamente los traits Serialize y Deserialize
-// Archivo especializado para obtener la estructura Persona 
-// con las funcionalidades de serialización y deserialización.
+// Archivo especializado para obtener la estructura Persona con las funcionalidades de serialización y deserialización.
 #[derive(Debug, Serialize, Deserialize)]
 
 // Se define la estructura Persona con los datos requeridos
