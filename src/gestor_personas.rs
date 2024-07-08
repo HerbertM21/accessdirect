@@ -91,7 +91,10 @@ impl GestorPersonas {
 }  
 
 // Se usa la estructura Result para manejar los errores como try-except en Python
-// Si hay un error, se retorna un Result con el error, de lo contrario se retorna un Result con un valor vacío
+// Se pueden manejar los errores de manera explicita o implícita
+// Si no lo hacemos de manera explicita, solo retornamos result con valores exitosos
+// Sin embargo, por detras, se manejan los errores si una linea de codigo falla, imprimiendo el error.
+
 
 // Mientras que el uso de la estructura Option es para manejar los valores nulos o vacíos
 // Si hay un valor, se retorna un Some(valor), de lo contrario se retorna un None
