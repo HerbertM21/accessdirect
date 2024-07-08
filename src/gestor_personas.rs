@@ -26,16 +26,19 @@ impl GestorPersonas {
         Ok(gestor)
     }
 
+    // Se encarga de ingresar una nueva persona al archivo y a la tabla hash
     pub fn ingreso(&mut self, persona: Persona) -> Result<(), GestorError> {
-        self.archivo.seek(SeekFrom::End(0))?; // seek al final del archivo
+        // Se mueve el cursor al final del archivo
+        self.archivo.seek(SeekFrom::End(0))?;
         // stream_position() devuelve la posición actual del cursor en el archivo
         let posicion: u64 = self.archivo.stream_position()?;
         let bytes: Vec<u8> = serialize(&persona)?;
-        self.archivo.write_all(&bytes)?; // write_all() escribe todos los bytes del buffer en el archivo
+        self.archivo.write_all(&bytes)?; 
         self.tabla_hash.insertar(persona.email.clone(), posicion);
         Ok(())
     }
 
+    // Se encarga de buscar una persona en el archivo a partir de su email
     pub fn busqueda(&mut self, email: &str) -> Result<Option<Persona>, GestorError> {
         if let Some(posicion) = self.tabla_hash.obtener(email) {
             self.archivo.seek(SeekFrom::Start(posicion))?;
@@ -48,6 +51,7 @@ impl GestorPersonas {
         }
     }
 
+    // Se encarga de modificar una persona en el archivo a partir de su email
     pub fn modificacion(&mut self, email: &str, nueva_persona: Persona) -> Result<bool, GestorError> {
         if let Some(posicion) = self.tabla_hash.obtener(email) {
             self.archivo.seek(SeekFrom::Start(posicion))?;
@@ -59,10 +63,8 @@ impl GestorPersonas {
         }
     }
 
-    // Se encarga de reconstruir la tabla hash a partir de los registros almacenados en 
-    // el archivo para que coincida con el contenido actual del archivo.
+    // En el caso de que exista el archivo binario, se reconstruye la tabla hash con los datos del archivo
     fn reconstruir_tabla_hash(&mut self) -> Result<(), GestorError> {
-        // seek al inicio del archivo (cursor en la posición 0)
         self.archivo.seek(SeekFrom::Start(0))?;
         let mut posicion = 0;
         loop {
@@ -79,7 +81,7 @@ impl GestorPersonas {
                             break; // Llegamos al final del archivo, salimos del loop
                         }
                     }
-                    // Si no es un error de EOF, lo propagamos
+                    // Si no es un error de EOF, se imprime el error y se retorna
                     return Err(GestorError::Bincode(e));
                 },
             }
